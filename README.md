@@ -21,12 +21,14 @@ This tool automates the manual discovery and configuration tasks for Microsoft 3
 
 ## Quick Start
 
-1. Run the main script with your tenant ID:
+1. Run the main script (you'll be prompted to sign in):
 ```powershell
-.\Main.ps1 -TenantId "your-tenant-id"
+.\Main.ps1
 ```
 
-2. Choose from menu options:
+2. Sign in with your Microsoft 365 credentials when prompted
+
+3. Choose from menu options:
    - Discovery Only
    - Configuration Only  
    - Both Discovery and Configuration
@@ -34,14 +36,17 @@ This tool automates the manual discovery and configuration tasks for Microsoft 3
 ## Usage Examples
 
 ```powershell
+# Run with interactive menu (default)
+.\Main.ps1
+
 # Run discovery only
-.\Main.ps1 -TenantId "12345678-1234-1234-1234-123456789abc" -Mode "Discovery"
+.\Main.ps1 -Mode "Discovery"
 
 # Run configuration only
-.\Main.ps1 -TenantId "12345678-1234-1234-1234-123456789abc" -Mode "Configuration"
+.\Main.ps1 -Mode "Configuration"
 
-# Run both with interactive menu
-.\Main.ps1 -TenantId "12345678-1234-1234-1234-123456789abc"
+# Run both discovery and configuration
+.\Main.ps1 -Mode "Both"
 ```
 
 ## Files
