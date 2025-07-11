@@ -440,6 +440,61 @@ function Generate-HtmlReport {
             border-radius: 2px;
             margin: 20px 0;
         }
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin: 30px 0;
+        }
+        .chart-section {
+            background: rgba(255,255,255,0.03);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .chart-section h3 {
+            color: #00D4AA;
+            margin: 0 0 20px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .chart-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .chart-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .bar-label {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            font-weight: 500;
+        }
+        .bar-container {
+            position: relative;
+            height: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2E5BFF 0%, #00D4AA 100%);
+            border-radius: 15px;
+            transition: width 0.3s ease;
+        }
+        .bar-value {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -622,10 +677,110 @@ function Generate-HtmlReport {
 
     # Sign-in Logs Section
     if ($Data.SignInLogs) {
+        # Calculate statistics
+        $totalFailures = $Data.SignInLogs.Count
+        $uniqueUsers = ($Data.SignInLogs | Select-Object -Unique UserPrincipalName).Count
+        $uniqueIPs = ($Data.SignInLogs | Select-Object -Unique IpAddress).Count
+        $uniqueApps = ($Data.SignInLogs | Select-Object -Unique AppDisplayName).Count
+        
+        # Top failures by user
+        $topUsers = $Data.SignInLogs | Group-Object UserPrincipalName | Sort-Object Count -Descending | Select-Object -First 5
+        
+        # Top failures by IP
+        $topIPs = $Data.SignInLogs | Group-Object IpAddress | Sort-Object Count -Descending | Select-Object -First 5
+        
+        # Top failures by app
+        $topApps = $Data.SignInLogs | Group-Object AppDisplayName | Sort-Object Count -Descending | Select-Object -First 5
+        
         $html += @"
         <div class="section">
             <h2>Failed Sign-in Attempts (Last 7 Days)</h2>
-            <p>Found $($Data.SignInLogs.Count) failed sign-in attempts</p>
+            
+            <!-- Summary Statistics -->
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Total Failed Attempts</strong>
+                    $totalFailures
+                </div>
+                <div class="info-item">
+                    <strong>Unique Users Affected</strong>
+                    $uniqueUsers
+                </div>
+                <div class="info-item">
+                    <strong>Unique IP Addresses</strong>
+                    $uniqueIPs
+                </div>
+                <div class="info-item">
+                    <strong>Unique Applications</strong>
+                    $uniqueApps
+                </div>
+            </div>
+            
+            <!-- Visual Charts -->
+            <div class="charts-container">
+                <div class="chart-section">
+                    <h3>Top 5 Users by Failed Attempts</h3>
+                    <div class="chart-bars">
+"@
+        foreach ($user in $topUsers) {
+            $percentage = [math]::Round(($user.Count / $totalFailures) * 100, 1)
+            $html += @"
+                        <div class="chart-bar">
+                            <div class="bar-label">$($user.Name)</div>
+                            <div class="bar-container">
+                                <div class="bar-fill" style="width: $($percentage)%"></div>
+                                <div class="bar-value">$($user.Count)</div>
+                            </div>
+                        </div>
+"@
+        }
+        $html += @"
+                    </div>
+                </div>
+                
+                <div class="chart-section">
+                    <h3>Top 5 IP Addresses by Failed Attempts</h3>
+                    <div class="chart-bars">
+"@
+        foreach ($ip in $topIPs) {
+            $percentage = [math]::Round(($ip.Count / $totalFailures) * 100, 1)
+            $html += @"
+                        <div class="chart-bar">
+                            <div class="bar-label">$($ip.Name)</div>
+                            <div class="bar-container">
+                                <div class="bar-fill" style="width: $($percentage)%"></div>
+                                <div class="bar-value">$($ip.Count)</div>
+                            </div>
+                        </div>
+"@
+        }
+        $html += @"
+                    </div>
+                </div>
+                
+                <div class="chart-section">
+                    <h3>Top 5 Applications by Failed Attempts</h3>
+                    <div class="chart-bars">
+"@
+        foreach ($app in $topApps) {
+            $percentage = [math]::Round(($app.Count / $totalFailures) * 100, 1)
+            $html += @"
+                        <div class="chart-bar">
+                            <div class="bar-label">$($app.Name)</div>
+                            <div class="bar-container">
+                                <div class="bar-fill" style="width: $($percentage)%"></div>
+                                <div class="bar-value">$($app.Count)</div>
+                            </div>
+                        </div>
+"@
+        }
+        $html += @"
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detailed Table -->
+            <h3>Recent Failed Attempts (Last 50)</h3>
             <div class="table-container">
                 <table>
                     <thead>
@@ -652,6 +807,56 @@ function Generate-HtmlReport {
                     </tbody>
                 </table>
             </div>
+        </div>
+"@
+    }
+
+    # Organizational Branding Section
+    if ($Data.OrganizationalBranding) {
+        $branding = $Data.OrganizationalBranding
+        $html += @"
+        <div class="section">
+            <h2>Organizational Branding</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Branding Configured</strong>
+                    $(if ($branding.HasBranding) { "Yes" } else { "No" })
+                </div>
+                <div class="info-item">
+                    <strong>Background Color</strong>
+                    $(if ($branding.BackgroundColor) { $branding.BackgroundColor } else { "Not configured" })
+                </div>
+                <div class="info-item">
+                    <strong>Banner Logo</strong>
+                    $(if ($branding.BannerLogoUrl) { "Configured" } else { "Not configured" })
+                </div>
+                <div class="info-item">
+                    <strong>Square Logo</strong>
+                    $(if ($branding.SquareLogoUrl) { "Configured" } else { "Not configured" })
+                </div>
+                <div class="info-item">
+                    <strong>Background Image</strong>
+                    $(if ($branding.BackgroundImageUrl) { "Configured" } else { "Not configured" })
+                </div>
+                <div class="info-item">
+                    <strong>Custom Sign-in Text</strong>
+                    $(if ($branding.SignInPageText) { "Configured" } else { "Not configured" })
+                </div>
+                <div class="info-item">
+                    <strong>Username Hint</strong>
+                    $(if ($branding.UsernameHintText) { $branding.UsernameHintText } else { "Not configured" })
+                </div>
+                <div class="info-item">
+                    <strong>Branding ID</strong>
+                    $(if ($branding.Id) { $branding.Id } else { "N/A" })
+                </div>
+            </div>
+            $(if ($branding.SignInPageText) { 
+                "<div class='info-item' style='margin-top: 20px; grid-column: 1 / -1;'>
+                    <strong>Sign-in Page Text</strong><br>
+                    $($branding.SignInPageText)
+                </div>" 
+            } else { "" })
         </div>
 "@
     }
