@@ -158,20 +158,49 @@ function Get-OrganizationalBranding {
         $org = Get-MgOrganization
         $orgId = $org[0].Id
         
-        # Get branding with organization ID
-        $branding = Get-MgOrganizationBranding -OrganizationId $orgId
+        # Get branding with organization ID - try default localization first
+        try {
+            $branding = Get-MgOrganizationBranding -OrganizationId $orgId -OrganizationalBrandingLocalizationId "0"
+        }
+        catch {
+            # If default fails, try without localization ID
+            $branding = Get-MgOrganizationBranding -OrganizationId $orgId
+        }
         
-        if ($branding) {
+        Write-Host "Raw branding data retrieved" -ForegroundColor Gray
+        Write-Host "Branding object type: $($branding.GetType().Name)" -ForegroundColor Gray
+        Write-Host "Branding count: $($branding.Count)" -ForegroundColor Gray
+        
+        # Handle if branding is an array
+        if ($branding -is [array] -and $branding.Count -gt 0) {
+            $brandingItem = $branding[0]
+        }
+        else {
+            $brandingItem = $branding
+        }
+        
+        if ($brandingItem) {
+            # Debug: Show what properties are available
+            $properties = $brandingItem | Get-Member -MemberType Property | Select-Object -ExpandProperty Name
+            Write-Host "Available properties: $($properties -join ', ')" -ForegroundColor Gray
+            
             $brandingData = [PSCustomObject]@{
-                BackgroundColor = $branding.BackgroundColor
-                BackgroundImageUrl = $branding.BackgroundImageUrl
-                BannerLogoUrl = $branding.BannerLogoUrl
-                SignInPageText = $branding.SignInPageText
-                SquareLogoUrl = $branding.SquareLogoUrl
-                UsernameHintText = $branding.UsernameHintText
-                Id = $branding.Id
+                BackgroundColor = $brandingItem.BackgroundColor
+                BackgroundImageUrl = $brandingItem.BackgroundImageUrl
+                BannerLogoUrl = $brandingItem.BannerLogoUrl
+                SignInPageText = $brandingItem.SignInPageText
+                SquareLogoUrl = $brandingItem.SquareLogoUrl
+                UsernameHintText = $brandingItem.UsernameHintText
+                Id = $brandingItem.Id
+                LocaleId = $brandingItem.LocaleId
                 HasBranding = $true
+                RawData = $brandingItem
             }
+            
+            # Debug: Show what we actually got
+            Write-Host "Background Color: '$($brandingItem.BackgroundColor)'" -ForegroundColor Gray
+            Write-Host "Background Image URL: '$($brandingItem.BackgroundImageUrl)'" -ForegroundColor Gray
+            Write-Host "Sign-in Page Text: '$($brandingItem.SignInPageText)'" -ForegroundColor Gray
         }
         else {
             $brandingData = [PSCustomObject]@{
@@ -182,15 +211,17 @@ function Get-OrganizationalBranding {
                 SquareLogoUrl = $null
                 UsernameHintText = $null
                 Id = $null
+                LocaleId = $null
                 HasBranding = $false
+                RawData = $null
             }
         }
         
-        Write-Host "Organizational branding retrieved" -ForegroundColor Green
+        Write-Host "Organizational branding retrieved successfully" -ForegroundColor Green
         return $brandingData
     }
     catch {
-        Write-Host "No organizational branding configured or accessible" -ForegroundColor Yellow
+        Write-Host "Error getting organizational branding: $($_.Exception.Message)" -ForegroundColor Red
         return [PSCustomObject]@{
             BackgroundColor = $null
             BackgroundImageUrl = $null
@@ -199,8 +230,10 @@ function Get-OrganizationalBranding {
             SquareLogoUrl = $null
             UsernameHintText = $null
             Id = $null
+            LocaleId = $null
             HasBranding = $false
             Error = $_.Exception.Message
+            RawData = $null
         }
     }
 }
