@@ -70,15 +70,34 @@ function Get-AuthenticationMethods {
     try {
         Write-Host "Getting authentication methods..." -ForegroundColor Cyan
         
+        # Get the main authentication methods policy
         $authMethodsPolicy = Get-MgPolicyAuthenticationMethodPolicy
-        $authMethods = Get-MgPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration -All
         
-        $methodsData = [PSCustomObject]@{
-            Policy = $authMethodsPolicy
-            Methods = $authMethods | Select-Object Id, State, IncludeTargets, ExcludeTargets
+        # Get individual authentication method configurations
+        $authMethods = @()
+        $methodTypes = @("microsoftAuthenticator", "fido2", "windowsHelloForBusiness", "temporaryAccessPass", "phoneNumber", "email", "password", "softwareOath")
+        
+        foreach ($methodType in $methodTypes) {
+            try {
+                $method = Get-MgPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration -AuthenticationMethodConfigurationId $methodType
+                if ($method) {
+                    $authMethods += $method
+                }
+            }
+            catch {
+                # Method might not exist or be accessible, continue with others
+                Write-Verbose "Could not retrieve $methodType configuration: $_"
+            }
         }
         
-        Write-Host "Authentication methods retrieved" -ForegroundColor Green
+        $methodsData = [PSCustomObject]@{
+            Policy = $authMethodsPolicy | Select-Object Id, DisplayName, Description, PolicyVersion, ReconfirmationInDays
+            Methods = $authMethods | Select-Object Id, State, "@odata.type"
+            MethodCount = $authMethods.Count
+            EnabledMethods = ($authMethods | Where-Object { $_.State -eq "enabled" }).Count
+        }
+        
+        Write-Host "Authentication methods retrieved ($($authMethods.Count) methods found)" -ForegroundColor Green
         return $methodsData
     }
     catch {
@@ -203,19 +222,21 @@ function Generate-HtmlReport {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Microsoft Identity Management Discovery Report</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Poppins', sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f5f5f5;
-            color: #333;
+            background-color: #000000;
+            color: #ffffff;
+            line-height: 1.6;
         }
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2E5BFF 0%, #00D4AA 25%, #8B5CF6 50%, #EC4899 75%, #F59E0B 100%);
             color: white;
-            padding: 30px;
-            border-radius: 10px;
+            padding: 40px;
+            border-radius: 15px;
             margin-bottom: 30px;
             position: relative;
             overflow: hidden;
@@ -223,154 +244,185 @@ function Generate-HtmlReport {
         .header::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 10px,
-                rgba(255,255,255,0.1) 10px,
-                rgba(255,255,255,0.1) 20px
-            );
-            animation: slide 20s linear infinite;
-        }
-        @keyframes slide {
-            0% { transform: translateX(-50px); }
-            100% { transform: translateX(50px); }
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
         }
         .logo {
             position: absolute;
             top: 20px;
             left: 20px;
-            font-size: 24px;
-            font-weight: bold;
-            background: white;
-            color: #667eea;
-            padding: 10px 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 32px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            color: white;
+            text-transform: lowercase;
+            z-index: 2;
         }
         .header-content {
             position: relative;
             z-index: 1;
-            margin-left: 160px;
+            margin-left: 120px;
         }
         .header h1 {
             margin: 0;
-            font-size: 28px;
-            font-weight: 300;
+            font-size: 32px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
         }
         .header p {
             margin: 10px 0 0 0;
             font-size: 16px;
             opacity: 0.9;
+            font-weight: 400;
+        }
+        .version-tag {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 400;
+            backdrop-filter: blur(10px);
+            z-index: 2;
         }
         .container {
             max-width: 1200px;
             margin: 0 auto;
         }
         .section {
-            background: white;
-            padding: 25px;
+            background: rgba(255,255,255,0.05);
+            padding: 30px;
             margin-bottom: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-left: 4px solid #667eea;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
         }
         .section h2 {
-            color: #667eea;
+            color: #2E5BFF;
             margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 22px;
-            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 25px;
+            font-size: 24px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            border-bottom: 2px solid rgba(46,91,255,0.3);
             padding-bottom: 10px;
         }
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
             margin-bottom: 20px;
         }
         .info-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 3px solid #667eea;
+            background: rgba(255,255,255,0.03);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #00D4AA;
+            backdrop-filter: blur(5px);
         }
         .info-item strong {
-            color: #667eea;
+            color: #00D4AA;
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: 600;
         }
         .table-container {
             overflow-x: auto;
             margin-top: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
         }
         th, td {
-            padding: 12px;
+            padding: 15px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2E5BFF 0%, #8B5CF6 100%);
             color: white;
             font-weight: 600;
+            font-family: 'Poppins', sans-serif;
         }
         tr:hover {
-            background-color: #f8f9fa;
+            background-color: rgba(255,255,255,0.05);
         }
         .status-enabled {
-            color: #28a745;
-            font-weight: bold;
+            color: #00D4AA;
+            font-weight: 600;
         }
         .status-disabled {
-            color: #dc3545;
-            font-weight: bold;
+            color: #EC4899;
+            font-weight: 600;
         }
         .score-container {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 30px;
             margin: 20px 0;
         }
         .score-circle {
-            width: 120px;
-            height: 120px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2E5BFF 0%, #00D4AA 50%, #8B5CF6 100%);
             color: white;
             font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(46,91,255,0.3);
+            position: relative;
+        }
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            border-radius: 50%;
+            background: #000000;
+            z-index: 1;
+        }
+        .score-circle span {
+            position: relative;
+            z-index: 2;
         }
         .footer {
             text-align: center;
             margin-top: 40px;
-            padding: 20px;
-            color: #666;
+            padding: 30px;
+            color: rgba(255,255,255,0.7);
             font-size: 14px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .gradient-bar {
+            height: 4px;
+            background: linear-gradient(90deg, #2E5BFF 0%, #00D4AA 25%, #8B5CF6 50%, #EC4899 75%, #F59E0B 100%);
+            border-radius: 2px;
+            margin: 20px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">PAX8</div>
+            <div class="logo">pax8</div>
+            <div class="version-tag">Identity Management // v.01</div>
             <div class="header-content">
                 <h1>Microsoft Identity Management Discovery Report</h1>
                 <p>Generated on $(Get-Date -Format "MMMM dd, yyyy 'at' hh:mm tt")</p>
             </div>
         </div>
+        <div class="gradient-bar"></div>
 "@
 
     # Tenant Information Section
@@ -407,7 +459,7 @@ function Generate-HtmlReport {
             <h2>Identity Secure Score</h2>
             <div class="score-container">
                 <div class="score-circle">
-                    $($score.CurrentScore)/$($score.MaxScore)
+                    <span>$($score.CurrentScore)/$($score.MaxScore)</span>
                 </div>
                 <div>
                     <p><strong>Current Score:</strong> $($score.CurrentScore) out of $($score.MaxScore)</p>
@@ -490,22 +542,43 @@ function Generate-HtmlReport {
         $html += @"
         <div class="section">
             <h2>Authentication Methods</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Total Methods</strong>
+                    $($authMethods.MethodCount)
+                </div>
+                <div class="info-item">
+                    <strong>Enabled Methods</strong>
+                    $($authMethods.EnabledMethods)
+                </div>
+                <div class="info-item">
+                    <strong>Policy Version</strong>
+                    $($authMethods.Policy.PolicyVersion)
+                </div>
+                <div class="info-item">
+                    <strong>Reconfirmation Days</strong>
+                    $($authMethods.Policy.ReconfirmationInDays)
+                </div>
+            </div>
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>Method ID</th>
+                            <th>Method Type</th>
                             <th>State</th>
+                            <th>Configuration Type</th>
                         </tr>
                     </thead>
                     <tbody>
 "@
         foreach ($method in $authMethods.Methods) {
             $statusClass = if ($method.State -eq "enabled") { "status-enabled" } else { "status-disabled" }
+            $methodType = $method."@odata.type" -replace "#microsoft.graph.", ""
             $html += @"
                         <tr>
                             <td>$($method.Id)</td>
                             <td><span class="$statusClass">$($method.State)</span></td>
+                            <td>$methodType</td>
                         </tr>
 "@
         }
@@ -555,9 +628,11 @@ function Generate-HtmlReport {
 
     # Footer
     $html += @"
+        <div class="gradient-bar"></div>
         <div class="footer">
-            <p>Microsoft Identity Management Discovery Report - Generated by PAX8 IDM Pack</p>
+            <p><strong>Microsoft Identity Management Discovery Report</strong></p>
             <p>This report contains sensitive information and should be handled according to your organization's security policies.</p>
+            <p>Copyright ©2025 Pax8 | All rights reserved</p>
         </div>
     </div>
 </body>
