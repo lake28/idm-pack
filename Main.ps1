@@ -22,7 +22,7 @@ function Install-GraphModule {
             $ModulesToInstall += $Module
         }
         else {
-            Write-Host "checkmark $Module is already installed." -ForegroundColor Green
+            Write-Host "$Module is already installed." -ForegroundColor Green
         }
     }
     
@@ -85,19 +85,19 @@ function Test-GraphConnection {
         Write-Host "Testing organization access..." -ForegroundColor Cyan
         $org = Get-MgOrganization
         if ($org) {
-            Write-Host "checkmark Organization: $($org.DisplayName)" -ForegroundColor Green
-            Write-Host "checkmark Domain: $($org.VerifiedDomains[0].Name)" -ForegroundColor Green
+            Write-Host "Organization: $($org.DisplayName)" -ForegroundColor Green
+            Write-Host "Domain: $($org.VerifiedDomains[0].Name)" -ForegroundColor Green
         }
         
         # Test 2: Get user count
         Write-Host "Testing user access..." -ForegroundColor Cyan
         $userCount = (Get-MgUser -Top 1 -CountVariable count).Count
-        Write-Host "checkmark User access verified (found $userCount users)" -ForegroundColor Green
+        Write-Host "User access verified (found $userCount users)" -ForegroundColor Green
         
         # Test 3: Get conditional access policies count
         Write-Host "Testing conditional access policy access..." -ForegroundColor Cyan
         $caCount = (Get-MgIdentityConditionalAccessPolicy -Top 1 -CountVariable count).Count
-        Write-Host "checkmark Conditional Access policy access verified (found $caCount policies)" -ForegroundColor Green
+        Write-Host "Conditional Access policy access verified (found $caCount policies)" -ForegroundColor Green
         
         Write-Host "All connection tests passed!" -ForegroundColor Green
         return $true

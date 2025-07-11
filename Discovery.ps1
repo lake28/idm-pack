@@ -20,7 +20,7 @@ function Get-ConditionalAccessPolicies {
             }
         }
         
-        Write-Host "✓ Found $($policies.Count) Conditional Access policies" -ForegroundColor Green
+        Write-Host "Found $($policies.Count) Conditional Access policies" -ForegroundColor Green
         return $policyData
     }
     catch {
@@ -49,7 +49,7 @@ function Get-MfaAndSsprStatus {
             LegacyMfaSettings = $mfaSettings
         }
         
-        Write-Host "✓ MFA and SSPR status retrieved" -ForegroundColor Green
+        Write-Host "MFA and SSPR status retrieved" -ForegroundColor Green
         return $statusData
     }
     catch {
@@ -70,7 +70,7 @@ function Get-AuthenticationMethods {
             Methods = $authMethods | Select-Object Id, State, IncludeTargets, ExcludeTargets
         }
         
-        Write-Host "✓ Authentication methods retrieved" -ForegroundColor Green
+        Write-Host "Authentication methods retrieved" -ForegroundColor Green
         return $methodsData
     }
     catch {
@@ -94,7 +94,7 @@ function Get-IdentitySecureScore {
             ControlProfiles = $scoreControlProfiles | Select-Object Id, Title, Category, Implementation, Score, Rank
         }
         
-        Write-Host "✓ Identity Secure Score: $($secureScores.CurrentScore)/$($secureScores.MaxScore)" -ForegroundColor Green
+        Write-Host "Identity Secure Score: $($secureScores.CurrentScore)/$($secureScores.MaxScore)" -ForegroundColor Green
         return $scoreData
     }
     catch {
@@ -114,7 +114,7 @@ function Get-SignInLogs {
         
         $logData = $signInLogs | Select-Object UserPrincipalName, CreatedDateTime, Status, Location, DeviceDetail, AppDisplayName, IpAddress
         
-        Write-Host "✓ Found $($signInLogs.Count) failed sign-in attempts in last 7 days" -ForegroundColor Green
+        Write-Host "Found $($signInLogs.Count) failed sign-in attempts in last 7 days" -ForegroundColor Green
         return $logData
     }
     catch {
@@ -139,7 +139,7 @@ function Get-OrganizationalBranding {
             Id = $branding.Id
         }
         
-        Write-Host "✓ Organizational branding retrieved" -ForegroundColor Green
+        Write-Host "Organizational branding retrieved" -ForegroundColor Green
         return $brandingData
     }
     catch {
@@ -162,7 +162,7 @@ function Export-DiscoveryData {
         
         $Data | ConvertTo-Json -Depth 10 | Out-File -FilePath $fileName -Encoding UTF8
         
-        Write-Host "✓ Discovery data exported to $fileName" -ForegroundColor Green
+        Write-Host "Discovery data exported to $fileName" -ForegroundColor Green
         return $fileName
     }
     catch {
