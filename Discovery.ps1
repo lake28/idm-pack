@@ -154,17 +154,7 @@ function Get-OrganizationalBranding {
     Write-Host "Checking organizational branding..." -ForegroundColor Cyan
     
     try {
-        # First get the organization ID
-        Write-Host "Getting organization ID..." -ForegroundColor Gray
-        $org = Invoke-MgGraphRequest -Uri "/organization" -Method GET
-        $orgId = $org.value[0].id
-        Write-Host "Organization ID: $orgId" -ForegroundColor Gray
-        
-        # Now check branding localizations
-        Write-Host "Checking branding localizations..." -ForegroundColor Gray
-        $brandingUri = "/organization/$orgId/branding/localizations"
-        $localizationsResponse = Invoke-MgGraphRequest -Uri $brandingUri -Method GET
-        
+        # Try multiple approaches to get branding data
         $brandingData = [PSCustomObject]@{
             BackgroundColor = $null
             BackgroundImageUrl = $null
@@ -180,14 +170,83 @@ function Get-OrganizationalBranding {
             Localizations = @()
         }
         
-        if ($localizationsResponse -and $localizationsResponse.value -and $localizationsResponse.value.Count -gt 0) {
-            Write-Host "SUCCESS: Found $($localizationsResponse.value.Count) branding localizations!" -ForegroundColor Green
+        # Method 1: Try branding localizations
+        try {
+            Write-Host "Method 1: Trying branding localizations..." -ForegroundColor Gray
+            $localizationsResponse = Invoke-MgGraphRequest -Uri "/organization/branding/localizations" -Method GET
             
-            $brandingData.LocalizationsCount = $localizationsResponse.value.Count
-            $brandingData.Localizations = $localizationsResponse.value
+            if ($localizationsResponse -and $localizationsResponse.value -and $localizationsResponse.value.Count -gt 0) {
+                Write-Host "SUCCESS: Found $($localizationsResponse.value.Count) branding localizations!" -ForegroundColor Green
+                $localizationsData = $localizationsResponse.value
+            }
+        }
+        catch {
+            Write-Host "Method 1 failed: $($_.Exception.Message)" -ForegroundColor Gray
+        }
+        
+        # Method 2: Try with organization context
+        if (-not $localizationsData) {
+            try {
+                Write-Host "Method 2: Trying with organization context..." -ForegroundColor Gray
+                $org = Invoke-MgGraphRequest -Uri "/organization" -Method GET
+                $orgId = $org.value[0].id
+                Write-Host "Organization ID: $orgId" -ForegroundColor Gray
+                
+                $brandingUri = "/organization/$orgId/branding/localizations"
+                $localizationsResponse = Invoke-MgGraphRequest -Uri $brandingUri -Method GET
+                
+                if ($localizationsResponse -and $localizationsResponse.value -and $localizationsResponse.value.Count -gt 0) {
+                    Write-Host "SUCCESS: Found $($localizationsResponse.value.Count) branding localizations!" -ForegroundColor Green
+                    $localizationsData = $localizationsResponse.value
+                }
+            }
+            catch {
+                Write-Host "Method 2 failed: $($_.Exception.Message)" -ForegroundColor Gray
+            }
+        }
+        
+        # Method 3: Try default branding endpoint
+        if (-not $localizationsData) {
+            try {
+                Write-Host "Method 3: Trying default branding endpoint..." -ForegroundColor Gray
+                $defaultBrandingResponse = Invoke-MgGraphRequest -Uri "/organization/branding" -Method GET
+                
+                if ($defaultBrandingResponse) {
+                    Write-Host "SUCCESS: Found default branding data!" -ForegroundColor Green
+                    $localizationsData = @($defaultBrandingResponse)
+                }
+            }
+            catch {
+                Write-Host "Method 3 failed: $($_.Exception.Message)" -ForegroundColor Gray
+            }
+        }
+        
+        # Method 4: Try with organization ID for default branding
+        if (-not $localizationsData) {
+            try {
+                Write-Host "Method 4: Trying default branding with org ID..." -ForegroundColor Gray
+                $org = Invoke-MgGraphRequest -Uri "/organization" -Method GET
+                $orgId = $org.value[0].id
+                
+                $defaultBrandingResponse = Invoke-MgGraphRequest -Uri "/organization/$orgId/branding" -Method GET
+                
+                if ($defaultBrandingResponse) {
+                    Write-Host "SUCCESS: Found default branding with org ID!" -ForegroundColor Green
+                    $localizationsData = @($defaultBrandingResponse)
+                }
+            }
+            catch {
+                Write-Host "Method 4 failed: $($_.Exception.Message)" -ForegroundColor Gray
+            }
+        }
+        
+        # Process the branding data if we found any
+        if ($localizationsData -and $localizationsData.Count -gt 0) {
+            $brandingData.LocalizationsCount = $localizationsData.Count
+            $brandingData.Localizations = $localizationsData
             
             # Use the first localization (usually default)
-            $defaultBranding = $localizationsResponse.value[0]
+            $defaultBranding = $localizationsData[0]
             
             # Check if we have actual branding data
             $hasBrandingData = $false
@@ -212,10 +271,10 @@ function Get-OrganizationalBranding {
             $brandingData.RawData = $defaultBranding
             
             # Show detailed results
-            Write-Host "=== BRANDING LOCALIZATIONS FOUND ===" -ForegroundColor Cyan
-            Write-Host "Total Localizations: $($localizationsResponse.value.Count)" -ForegroundColor White
+            Write-Host "=== BRANDING DATA FOUND ===" -ForegroundColor Cyan
+            Write-Host "Total Localizations: $($localizationsData.Count)" -ForegroundColor White
             
-            foreach ($localization in $localizationsResponse.value) {
+            foreach ($localization in $localizationsData) {
                 Write-Host "--- Localization: $($localization.locale) ---" -ForegroundColor Yellow
                 Write-Host "  Background Color: '$($localization.backgroundColor)'" -ForegroundColor White
                 Write-Host "  Background Image: '$($localization.backgroundImageRelativeUrl)'" -ForegroundColor White
@@ -227,59 +286,13 @@ function Get-OrganizationalBranding {
             
             Write-Host "Using Default Localization: $($defaultBranding.locale)" -ForegroundColor Green
             Write-Host "Has Branding Data: $hasBrandingData" -ForegroundColor Green
-            Write-Host "=================================" -ForegroundColor Cyan
-            
-            return $brandingData
+            Write-Host "=========================" -ForegroundColor Cyan
         }
         else {
-            Write-Host "No branding localizations found" -ForegroundColor Yellow
-            
-            # Also try the default branding endpoint as fallback
-            try {
-                Write-Host "Trying default branding endpoint..." -ForegroundColor Gray
-                $defaultBrandingUri = "/organization/$orgId/branding"
-                $defaultBrandingResponse = Invoke-MgGraphRequest -Uri $defaultBrandingUri -Method GET
-                
-                if ($defaultBrandingResponse) {
-                    Write-Host "Found default branding data!" -ForegroundColor Green
-                    
-                    $hasBrandingData = $false
-                    if ($defaultBrandingResponse.backgroundColor -or 
-                        $defaultBrandingResponse.backgroundImageRelativeUrl -or 
-                        $defaultBrandingResponse.bannerLogoRelativeUrl -or 
-                        $defaultBrandingResponse.signInPageText -or 
-                        $defaultBrandingResponse.squareLogoRelativeUrl -or 
-                        $defaultBrandingResponse.usernameHintText) {
-                        $hasBrandingData = $true
-                    }
-                    
-                    $brandingData.BackgroundColor = $defaultBrandingResponse.backgroundColor
-                    $brandingData.BackgroundImageUrl = $defaultBrandingResponse.backgroundImageRelativeUrl
-                    $brandingData.BannerLogoUrl = $defaultBrandingResponse.bannerLogoRelativeUrl
-                    $brandingData.SignInPageText = $defaultBrandingResponse.signInPageText
-                    $brandingData.SquareLogoUrl = $defaultBrandingResponse.squareLogoRelativeUrl
-                    $brandingData.UsernameHintText = $defaultBrandingResponse.usernameHintText
-                    $brandingData.Id = $defaultBrandingResponse.id
-                    $brandingData.HasBranding = $hasBrandingData
-                    $brandingData.RawData = $defaultBrandingResponse
-                    
-                    Write-Host "=== DEFAULT BRANDING FOUND ===" -ForegroundColor Cyan
-                    Write-Host "Background Color: '$($defaultBrandingResponse.backgroundColor)'" -ForegroundColor White
-                    Write-Host "Background Image: '$($defaultBrandingResponse.backgroundImageRelativeUrl)'" -ForegroundColor White
-                    Write-Host "Sign-in Page Text: '$($defaultBrandingResponse.signInPageText)'" -ForegroundColor White
-                    Write-Host "Banner Logo: '$($defaultBrandingResponse.bannerLogoRelativeUrl)'" -ForegroundColor White
-                    Write-Host "Square Logo: '$($defaultBrandingResponse.squareLogoRelativeUrl)'" -ForegroundColor White
-                    Write-Host "Username Hint: '$($defaultBrandingResponse.usernameHintText)'" -ForegroundColor White
-                    Write-Host "Has Branding Data: $hasBrandingData" -ForegroundColor White
-                    Write-Host "=============================" -ForegroundColor Cyan
-                }
-            }
-            catch {
-                Write-Host "Default branding endpoint also failed: $($_.Exception.Message)" -ForegroundColor Yellow
-            }
-            
-            return $brandingData
+            Write-Host "No branding data found through any method" -ForegroundColor Yellow
         }
+        
+        return $brandingData
     }
     catch {
         Write-Host "Error accessing branding API: $($_.Exception.Message)" -ForegroundColor Red
