@@ -226,6 +226,18 @@ function Get-OrganizationalBranding {
             
             Write-Host "Using Default Localization: $($defaultBranding.Id)" -ForegroundColor Green
             Write-Host "Has Branding Data: $hasBrandingData" -ForegroundColor Green
+            
+            # Debug: Show what properties are actually available
+            Write-Host "=== DEBUG: Available Properties ===" -ForegroundColor Magenta
+            $defaultBranding | Get-Member -MemberType Properties | ForEach-Object { 
+                Write-Host "  Property: $($_.Name)" -ForegroundColor Gray 
+            }
+            Write-Host "=== DEBUG: Assigned Values ===" -ForegroundColor Magenta
+            Write-Host "  BackgroundImageUrl: '$($brandingData.BackgroundImageUrl)'" -ForegroundColor Gray
+            Write-Host "  SignInPageText: '$($brandingData.SignInPageText)'" -ForegroundColor Gray
+            Write-Host "  BannerLogoUrl: '$($brandingData.BannerLogoUrl)'" -ForegroundColor Gray
+            Write-Host "  SquareLogoUrl: '$($brandingData.SquareLogoUrl)'" -ForegroundColor Gray
+            Write-Host "  HasBranding: $($brandingData.HasBranding)" -ForegroundColor Gray
             Write-Host "=================================" -ForegroundColor Cyan
         }
         else {
