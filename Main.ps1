@@ -1,7 +1,4 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$TenantId,
-    
     [Parameter(Mandatory = $false)]
     [ValidateSet("Discovery", "Configuration", "Both")]
     [string]$Mode = "Both"
@@ -21,8 +18,6 @@ function Install-GraphModule {
 
 # Connect to Microsoft Graph with required permissions
 function Connect-ToGraph {
-    param([string]$TenantId)
-    
     try {
         Write-Host "Connecting to Microsoft Graph..." -ForegroundColor Yellow
         
@@ -38,7 +33,7 @@ function Connect-ToGraph {
             "Reports.Read.All"
         )
         
-        Connect-MgGraph -TenantId $TenantId -Scopes $RequiredScopes
+        Connect-MgGraph -Scopes $RequiredScopes
         
         # Test connection
         $context = Get-MgContext
@@ -94,7 +89,6 @@ function Show-Menu {
     Clear-Host
     Write-Host "Microsoft Identity Management Runbook Automation" -ForegroundColor Green
     Write-Host "=================================================" -ForegroundColor Green
-    Write-Host "Tenant ID: $TenantId" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Select an option:" -ForegroundColor Cyan
     Write-Host "1. Discovery Only" -ForegroundColor White
@@ -135,11 +129,11 @@ function Start-Configuration {
 
 try {
     Write-Host "Microsoft Identity Management Runbook Automation" -ForegroundColor Green
-    Write-Host "Starting for tenant: $TenantId" -ForegroundColor Yellow
+    Write-Host "You will be prompted to sign in with your credentials" -ForegroundColor Yellow
     
     # Install Graph module and connect
     Install-GraphModule
-    if (-not (Connect-ToGraph -TenantId $TenantId)) {
+    if (-not (Connect-ToGraph)) {
         throw "Failed to connect to Microsoft Graph"
     }
     
