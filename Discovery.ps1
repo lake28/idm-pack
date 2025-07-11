@@ -154,105 +154,57 @@ function Get-OrganizationalBranding {
     try {
         Write-Host "Checking organizational branding..." -ForegroundColor Cyan
         
-        # Try multiple approaches to get branding
-        $brandingData = $null
-        $branding = $null
-        
-        # Method 1: Try to get branding without organization ID (uses current context)
+        # Use Invoke-MgGraphRequest to get branding data directly via REST API
         try {
-            Write-Host "Trying to get branding without organization ID..." -ForegroundColor Gray
-            $branding = Get-MgOrganizationBranding
-            Write-Host "Method 1 succeeded" -ForegroundColor Gray
-        }
-        catch {
-            Write-Host "Method 1 failed: $($_.Exception.Message)" -ForegroundColor Gray
-        }
-        
-        # Method 2: If that fails, try with organization ID
-        if (-not $branding) {
-            try {
-                Write-Host "Trying to get organization ID..." -ForegroundColor Gray
-                $org = Get-MgOrganization
-                if ($org -and $org.Count -gt 0) {
-                    $orgId = $org[0].Id
-                    Write-Host "Organization ID: '$orgId'" -ForegroundColor Gray
-                    
-                    if ($orgId -and $orgId.Trim() -ne "") {
-                        Write-Host "Trying to get branding with organization ID..." -ForegroundColor Gray
-                        $branding = Get-MgOrganizationBranding -OrganizationId $orgId
-                        Write-Host "Method 2 succeeded" -ForegroundColor Gray
-                    }
-                    else {
-                        Write-Host "Organization ID is empty or null" -ForegroundColor Gray
-                    }
-                }
-            }
-            catch {
-                Write-Host "Method 2 failed: $($_.Exception.Message)" -ForegroundColor Gray
-            }
-        }
-        
-        # Method 3: Try with default localization
-        if (-not $branding) {
-            try {
-                Write-Host "Trying to get branding with default localization..." -ForegroundColor Gray
-                $org = Get-MgOrganization
-                if ($org -and $org.Count -gt 0) {
-                    $orgId = $org[0].Id
-                    if ($orgId -and $orgId.Trim() -ne "") {
-                        $branding = Get-MgOrganizationBranding -OrganizationId $orgId -OrganizationalBrandingLocalizationId "0"
-                        Write-Host "Method 3 succeeded" -ForegroundColor Gray
-                    }
-                }
-            }
-            catch {
-                Write-Host "Method 3 failed: $($_.Exception.Message)" -ForegroundColor Gray
-            }
-        }
-        
-        if ($branding) {
-            Write-Host "Branding data found!" -ForegroundColor Green
-            Write-Host "Branding object type: $($branding.GetType().Name)" -ForegroundColor Gray
+            Write-Host "Trying to get branding via Graph REST API..." -ForegroundColor Gray
             
-            # Handle if branding is an array
-            if ($branding -is [array] -and $branding.Count -gt 0) {
-                $brandingItem = $branding[0]
-                Write-Host "Using first item from array (count: $($branding.Count))" -ForegroundColor Gray
-            }
-            else {
-                $brandingItem = $branding
-                Write-Host "Using single branding object" -ForegroundColor Gray
-            }
+            # Try to get default branding first
+            $brandingResponse = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/organization/branding" -Method GET
             
-            if ($brandingItem) {
-                # Debug: Show what properties are available
-                $properties = $brandingItem | Get-Member -MemberType Property | Select-Object -ExpandProperty Name
-                Write-Host "Available properties: $($properties -join ', ')" -ForegroundColor Gray
+            if ($brandingResponse) {
+                Write-Host "Branding data found via REST API!" -ForegroundColor Green
                 
                 $brandingData = [PSCustomObject]@{
-                    BackgroundColor = $brandingItem.BackgroundColor
-                    BackgroundImageUrl = $brandingItem.BackgroundImageUrl
-                    BannerLogoUrl = $brandingItem.BannerLogoUrl
-                    SignInPageText = $brandingItem.SignInPageText
-                    SquareLogoUrl = $brandingItem.SquareLogoUrl
-                    UsernameHintText = $brandingItem.UsernameHintText
-                    Id = $brandingItem.Id
-                    LocaleId = if ($brandingItem.PSObject.Properties.Name -contains "LocaleId") { $brandingItem.LocaleId } else { $null }
+                    BackgroundColor = $brandingResponse.backgroundColor
+                    BackgroundImageUrl = $brandingResponse.backgroundImageRelativeUrl
+                    BannerLogoUrl = $brandingResponse.bannerLogoRelativeUrl
+                    SignInPageText = $brandingResponse.signInPageText
+                    SquareLogoUrl = $brandingResponse.squareLogoRelativeUrl
+                    UsernameHintText = $brandingResponse.usernameHintText
+                    Id = $brandingResponse.id
+                    LocaleId = $brandingResponse.locale
                     HasBranding = $true
-                    RawData = $brandingItem
+                    RawData = $brandingResponse
                 }
                 
                 # Debug: Show what we actually got
-                Write-Host "Background Color: '$($brandingItem.BackgroundColor)'" -ForegroundColor Gray
-                Write-Host "Background Image URL: '$($brandingItem.BackgroundImageUrl)'" -ForegroundColor Gray
-                Write-Host "Sign-in Page Text: '$($brandingItem.SignInPageText)'" -ForegroundColor Gray
-                Write-Host "Banner Logo URL: '$($brandingItem.BannerLogoUrl)'" -ForegroundColor Gray
-                Write-Host "Square Logo URL: '$($brandingItem.SquareLogoUrl)'" -ForegroundColor Gray
+                Write-Host "Background Color: '$($brandingResponse.backgroundColor)'" -ForegroundColor Gray
+                Write-Host "Background Image URL: '$($brandingResponse.backgroundImageRelativeUrl)'" -ForegroundColor Gray
+                Write-Host "Sign-in Page Text: '$($brandingResponse.signInPageText)'" -ForegroundColor Gray
+                Write-Host "Banner Logo URL: '$($brandingResponse.bannerLogoRelativeUrl)'" -ForegroundColor Gray
+                Write-Host "Square Logo URL: '$($brandingResponse.squareLogoRelativeUrl)'" -ForegroundColor Gray
+                Write-Host "Username Hint: '$($brandingResponse.usernameHintText)'" -ForegroundColor Gray
+            }
+            else {
+                Write-Host "No branding data returned from REST API" -ForegroundColor Yellow
+                $brandingData = [PSCustomObject]@{
+                    BackgroundColor = $null
+                    BackgroundImageUrl = $null
+                    BannerLogoUrl = $null
+                    SignInPageText = $null
+                    SquareLogoUrl = $null
+                    UsernameHintText = $null
+                    Id = $null
+                    LocaleId = $null
+                    HasBranding = $false
+                    RawData = $null
+                }
             }
         }
-        
-        if (-not $brandingData) {
-            Write-Host "No branding data found" -ForegroundColor Yellow
+        catch {
+            Write-Host "REST API method failed: $($_.Exception.Message)" -ForegroundColor Yellow
+            
+            # Fallback: Return no branding data rather than fail
             $brandingData = [PSCustomObject]@{
                 BackgroundColor = $null
                 BackgroundImageUrl = $null
@@ -263,6 +215,7 @@ function Get-OrganizationalBranding {
                 Id = $null
                 LocaleId = $null
                 HasBranding = $false
+                Error = $_.Exception.Message
                 RawData = $null
             }
         }
