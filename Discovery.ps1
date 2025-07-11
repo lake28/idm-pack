@@ -192,9 +192,6 @@ function Get-OrganizationalBranding {
                 $defaultBranding = $brandingLocalizations
             }
             
-            # Debug: Check if we got the branding object
-            Write-Host "DEBUG: defaultBranding type: $($defaultBranding.GetType().Name)" -ForegroundColor Magenta
-            Write-Host "DEBUG: defaultBranding is null: $($defaultBranding -eq $null)" -ForegroundColor Magenta
             
             # Check if we have actual branding data - use correct property names (PascalCase)
             $hasBrandingData = $false
@@ -235,26 +232,6 @@ function Get-OrganizationalBranding {
             Write-Host "Using Default Localization: $($defaultBranding.Id)" -ForegroundColor Green
             Write-Host "Has Branding Data: $hasBrandingData" -ForegroundColor Green
             
-            # Debug: Show what properties are actually available
-            Write-Host "=== DEBUG: Available Properties ===" -ForegroundColor Magenta
-            if ($defaultBranding) {
-                $defaultBranding | Get-Member -MemberType Properties | ForEach-Object { 
-                    Write-Host "  Property: $($_.Name)" -ForegroundColor Gray 
-                }
-                Write-Host "=== DEBUG: Raw Property Values ===" -ForegroundColor Magenta
-                Write-Host "  BackgroundImageRelativeUrl: '$($defaultBranding.BackgroundImageRelativeUrl)'" -ForegroundColor Gray
-                Write-Host "  SignInPageText: '$($defaultBranding.SignInPageText)'" -ForegroundColor Gray
-                Write-Host "  BannerLogoRelativeUrl: '$($defaultBranding.BannerLogoRelativeUrl)'" -ForegroundColor Gray
-                Write-Host "  SquareLogoRelativeUrl: '$($defaultBranding.SquareLogoRelativeUrl)'" -ForegroundColor Gray
-            } else {
-                Write-Host "  defaultBranding is null!" -ForegroundColor Red
-            }
-            Write-Host "=== DEBUG: Assigned Values ===" -ForegroundColor Magenta
-            Write-Host "  BackgroundImageUrl: '$($brandingData.BackgroundImageUrl)'" -ForegroundColor Gray
-            Write-Host "  SignInPageText: '$($brandingData.SignInPageText)'" -ForegroundColor Gray
-            Write-Host "  BannerLogoUrl: '$($brandingData.BannerLogoUrl)'" -ForegroundColor Gray
-            Write-Host "  SquareLogoUrl: '$($brandingData.SquareLogoUrl)'" -ForegroundColor Gray
-            Write-Host "  HasBranding: $($brandingData.HasBranding)" -ForegroundColor Gray
             Write-Host "=================================" -ForegroundColor Cyan
         }
         else {
