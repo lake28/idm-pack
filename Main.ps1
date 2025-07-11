@@ -4,15 +4,38 @@ param(
     [string]$Mode = "Both"
 )
 
-# Install Microsoft.Graph module if not present
+# Install required Microsoft.Graph modules if not present
 function Install-GraphModule {
-    if (-not (Get-Module -ListAvailable -Name Microsoft.Graph)) {
-        Write-Host "Installing Microsoft.Graph PowerShell module..." -ForegroundColor Yellow
-        Install-Module -Name Microsoft.Graph -Scope CurrentUser -Force
-        Write-Host "Microsoft.Graph module installed successfully." -ForegroundColor Green
+    $RequiredModules = @(
+        "Microsoft.Graph.Authentication",
+        "Microsoft.Graph.Identity.SignIns",
+        "Microsoft.Graph.Identity.DirectoryManagement",
+        "Microsoft.Graph.Users",
+        "Microsoft.Graph.Reports",
+        "Microsoft.Graph.Security"
+    )
+    
+    $ModulesToInstall = @()
+    
+    foreach ($Module in $RequiredModules) {
+        if (-not (Get-Module -ListAvailable -Name $Module)) {
+            $ModulesToInstall += $Module
+        }
+        else {
+            Write-Host "✓ $Module is already installed." -ForegroundColor Green
+        }
+    }
+    
+    if ($ModulesToInstall.Count -gt 0) {
+        Write-Host "Installing required Microsoft.Graph modules..." -ForegroundColor Yellow
+        foreach ($Module in $ModulesToInstall) {
+            Write-Host "Installing $Module..." -ForegroundColor Cyan
+            Install-Module -Name $Module -Scope CurrentUser -Force
+        }
+        Write-Host "All required modules installed successfully." -ForegroundColor Green
     }
     else {
-        Write-Host "Microsoft.Graph module is already installed." -ForegroundColor Green
+        Write-Host "All required Microsoft.Graph modules are already installed." -ForegroundColor Green
     }
 }
 
