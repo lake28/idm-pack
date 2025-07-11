@@ -86,7 +86,7 @@ function Get-AuthenticationMethods {
             }
             catch {
                 # Method might not exist or be accessible, continue with others
-                Write-Host "  - $methodType: Not configured or accessible" -ForegroundColor Gray
+                Write-Host "  - ${methodType}: Not configured or accessible" -ForegroundColor Gray
             }
         }
         
