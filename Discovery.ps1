@@ -157,7 +157,7 @@ function Get-OrganizationalBranding {
         # Get organization ID first
         Write-Host "Getting organization ID..." -ForegroundColor Gray
         $org = Get-MgOrganization
-        $organizationId = $org[0].Id
+        $organizationId = $org.Id
         Write-Host "Organization ID: $organizationId" -ForegroundColor Gray
         
         # Use the correct cmdlet to get branding localizations
