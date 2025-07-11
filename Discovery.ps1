@@ -75,7 +75,7 @@ function Get-AuthenticationMethods {
         
         # Get individual authentication method configurations
         $authMethods = @()
-        $methodTypes = @("microsoftAuthenticator", "fido2", "windowsHelloForBusiness", "temporaryAccessPass", "phoneNumber", "email", "password", "softwareOath")
+        $methodTypes = @("microsoftAuthenticator", "fido2", "temporaryAccessPass", "email", "softwareOath")
         
         foreach ($methodType in $methodTypes) {
             try {
@@ -86,7 +86,7 @@ function Get-AuthenticationMethods {
             }
             catch {
                 # Method might not exist or be accessible, continue with others
-                Write-Verbose "Could not retrieve $methodType configuration: $_"
+                Write-Host "  - $methodType: Not configured or accessible" -ForegroundColor Gray
             }
         }
         
@@ -154,24 +154,54 @@ function Get-OrganizationalBranding {
     try {
         Write-Host "Checking organizational branding..." -ForegroundColor Cyan
         
-        $branding = Get-MgOrganizationBranding
+        # Get the organization first to get the ID
+        $org = Get-MgOrganization
+        $orgId = $org[0].Id
         
-        $brandingData = [PSCustomObject]@{
-            BackgroundColor = $branding.BackgroundColor
-            BackgroundImageUrl = $branding.BackgroundImageUrl
-            BannerLogoUrl = $branding.BannerLogoUrl
-            SignInPageText = $branding.SignInPageText
-            SquareLogoUrl = $branding.SquareLogoUrl
-            UsernameHintText = $branding.UsernameHintText
-            Id = $branding.Id
+        # Get branding with organization ID
+        $branding = Get-MgOrganizationBranding -OrganizationId $orgId
+        
+        if ($branding) {
+            $brandingData = [PSCustomObject]@{
+                BackgroundColor = $branding.BackgroundColor
+                BackgroundImageUrl = $branding.BackgroundImageUrl
+                BannerLogoUrl = $branding.BannerLogoUrl
+                SignInPageText = $branding.SignInPageText
+                SquareLogoUrl = $branding.SquareLogoUrl
+                UsernameHintText = $branding.UsernameHintText
+                Id = $branding.Id
+                HasBranding = $true
+            }
+        }
+        else {
+            $brandingData = [PSCustomObject]@{
+                BackgroundColor = $null
+                BackgroundImageUrl = $null
+                BannerLogoUrl = $null
+                SignInPageText = $null
+                SquareLogoUrl = $null
+                UsernameHintText = $null
+                Id = $null
+                HasBranding = $false
+            }
         }
         
         Write-Host "Organizational branding retrieved" -ForegroundColor Green
         return $brandingData
     }
     catch {
-        Write-Error "Failed to get organizational branding: $_"
-        return $null
+        Write-Host "No organizational branding configured or accessible" -ForegroundColor Yellow
+        return [PSCustomObject]@{
+            BackgroundColor = $null
+            BackgroundImageUrl = $null
+            BannerLogoUrl = $null
+            SignInPageText = $null
+            SquareLogoUrl = $null
+            UsernameHintText = $null
+            Id = $null
+            HasBranding = $false
+            Error = $_.Exception.Message
+        }
     }
 }
 
