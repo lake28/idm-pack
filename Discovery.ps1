@@ -151,61 +151,64 @@ function Get-SignInLogs {
 }
 
 function Get-OrganizationalBranding {
+    Write-Host "Checking organizational branding..." -ForegroundColor Cyan
+    
     try {
-        Write-Host "Checking organizational branding..." -ForegroundColor Cyan
+        Write-Host "Using Graph REST API to get branding..." -ForegroundColor Gray
         
-        # Use Invoke-MgGraphRequest to get branding data directly via REST API
-        try {
-            Write-Host "Trying to get branding via Graph REST API..." -ForegroundColor Gray
-            
-            # Try to get default branding first
-            $brandingResponse = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/organization/branding" -Method GET
-            
-            if ($brandingResponse) {
-                Write-Host "Branding data found via REST API!" -ForegroundColor Green
-                
-                $brandingData = [PSCustomObject]@{
-                    BackgroundColor = $brandingResponse.backgroundColor
-                    BackgroundImageUrl = $brandingResponse.backgroundImageRelativeUrl
-                    BannerLogoUrl = $brandingResponse.bannerLogoRelativeUrl
-                    SignInPageText = $brandingResponse.signInPageText
-                    SquareLogoUrl = $brandingResponse.squareLogoRelativeUrl
-                    UsernameHintText = $brandingResponse.usernameHintText
-                    Id = $brandingResponse.id
-                    LocaleId = $brandingResponse.locale
-                    HasBranding = $true
-                    RawData = $brandingResponse
-                }
-                
-                # Debug: Show what we actually got
-                Write-Host "Background Color: '$($brandingResponse.backgroundColor)'" -ForegroundColor Gray
-                Write-Host "Background Image URL: '$($brandingResponse.backgroundImageRelativeUrl)'" -ForegroundColor Gray
-                Write-Host "Sign-in Page Text: '$($brandingResponse.signInPageText)'" -ForegroundColor Gray
-                Write-Host "Banner Logo URL: '$($brandingResponse.bannerLogoRelativeUrl)'" -ForegroundColor Gray
-                Write-Host "Square Logo URL: '$($brandingResponse.squareLogoRelativeUrl)'" -ForegroundColor Gray
-                Write-Host "Username Hint: '$($brandingResponse.usernameHintText)'" -ForegroundColor Gray
-            }
-            else {
-                Write-Host "No branding data returned from REST API" -ForegroundColor Yellow
-                $brandingData = [PSCustomObject]@{
-                    BackgroundColor = $null
-                    BackgroundImageUrl = $null
-                    BannerLogoUrl = $null
-                    SignInPageText = $null
-                    SquareLogoUrl = $null
-                    UsernameHintText = $null
-                    Id = $null
-                    LocaleId = $null
-                    HasBranding = $false
-                    RawData = $null
-                }
-            }
+        # Use REST API call directly - this should not prompt for any parameters
+        $headers = @{
+            'Content-Type' = 'application/json'
         }
-        catch {
-            Write-Host "REST API method failed: $($_.Exception.Message)" -ForegroundColor Yellow
+        
+        $brandingResponse = $null
+        
+        # Try the REST API call
+        $brandingResponse = Invoke-MgGraphRequest -Uri "/organization/branding" -Method GET -Headers $headers
+        
+        if ($brandingResponse -and $brandingResponse.PSObject.Properties.Count -gt 0) {
+            Write-Host "SUCCESS: Branding data retrieved!" -ForegroundColor Green
             
-            # Fallback: Return no branding data rather than fail
+            # Check if we have actual branding data
+            $hasBrandingData = $false
+            if ($brandingResponse.backgroundColor -or 
+                $brandingResponse.backgroundImageRelativeUrl -or 
+                $brandingResponse.bannerLogoRelativeUrl -or 
+                $brandingResponse.signInPageText -or 
+                $brandingResponse.squareLogoRelativeUrl -or 
+                $brandingResponse.usernameHintText) {
+                $hasBrandingData = $true
+            }
+            
             $brandingData = [PSCustomObject]@{
+                BackgroundColor = $brandingResponse.backgroundColor
+                BackgroundImageUrl = $brandingResponse.backgroundImageRelativeUrl
+                BannerLogoUrl = $brandingResponse.bannerLogoRelativeUrl
+                SignInPageText = $brandingResponse.signInPageText
+                SquareLogoUrl = $brandingResponse.squareLogoRelativeUrl
+                UsernameHintText = $brandingResponse.usernameHintText
+                Id = $brandingResponse.id
+                LocaleId = $brandingResponse.locale
+                HasBranding = $hasBrandingData
+                RawData = $brandingResponse
+            }
+            
+            # Show what we found
+            Write-Host "=== BRANDING RESULTS ===" -ForegroundColor Cyan
+            Write-Host "Background Color: '$($brandingResponse.backgroundColor)'" -ForegroundColor White
+            Write-Host "Background Image URL: '$($brandingResponse.backgroundImageRelativeUrl)'" -ForegroundColor White
+            Write-Host "Sign-in Page Text: '$($brandingResponse.signInPageText)'" -ForegroundColor White
+            Write-Host "Banner Logo URL: '$($brandingResponse.bannerLogoRelativeUrl)'" -ForegroundColor White
+            Write-Host "Square Logo URL: '$($brandingResponse.squareLogoRelativeUrl)'" -ForegroundColor White
+            Write-Host "Username Hint: '$($brandingResponse.usernameHintText)'" -ForegroundColor White
+            Write-Host "Has Branding Data: $hasBrandingData" -ForegroundColor White
+            Write-Host "======================" -ForegroundColor Cyan
+            
+            return $brandingData
+        }
+        else {
+            Write-Host "No branding configuration found" -ForegroundColor Yellow
+            return [PSCustomObject]@{
                 BackgroundColor = $null
                 BackgroundImageUrl = $null
                 BannerLogoUrl = $null
@@ -215,16 +218,14 @@ function Get-OrganizationalBranding {
                 Id = $null
                 LocaleId = $null
                 HasBranding = $false
-                Error = $_.Exception.Message
                 RawData = $null
             }
         }
-        
-        Write-Host "Organizational branding check completed" -ForegroundColor Green
-        return $brandingData
     }
     catch {
-        Write-Host "Error getting organizational branding: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "Error accessing branding API: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "This may be due to insufficient permissions or no branding configured" -ForegroundColor Yellow
+        
         return [PSCustomObject]@{
             BackgroundColor = $null
             BackgroundImageUrl = $null

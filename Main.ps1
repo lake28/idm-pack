@@ -8,7 +8,7 @@ param(
 function Install-GraphModule {
     $RequiredModules = @(
         "Microsoft.Graph.Authentication",
-        "Microsoft.Graph.Identity.SignIns",
+        "Microsoft.Graph.Identity.SignIns", 
         "Microsoft.Graph.Identity.DirectoryManagement",
         "Microsoft.Graph.Users",
         "Microsoft.Graph.Reports",
