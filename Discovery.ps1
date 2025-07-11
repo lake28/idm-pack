@@ -186,7 +186,15 @@ function Get-OrganizationalBranding {
             $brandingData.Localizations = $brandingLocalizations
             
             # Use the first localization (usually default with ID "0")
-            $defaultBranding = $brandingLocalizations[0]
+            if ($brandingLocalizations -is [array]) {
+                $defaultBranding = $brandingLocalizations[0]
+            } else {
+                $defaultBranding = $brandingLocalizations
+            }
+            
+            # Debug: Check if we got the branding object
+            Write-Host "DEBUG: defaultBranding type: $($defaultBranding.GetType().Name)" -ForegroundColor Magenta
+            Write-Host "DEBUG: defaultBranding is null: $($defaultBranding -eq $null)" -ForegroundColor Magenta
             
             # Check if we have actual branding data - use correct property names (PascalCase)
             $hasBrandingData = $false
@@ -229,8 +237,17 @@ function Get-OrganizationalBranding {
             
             # Debug: Show what properties are actually available
             Write-Host "=== DEBUG: Available Properties ===" -ForegroundColor Magenta
-            $defaultBranding | Get-Member -MemberType Properties | ForEach-Object { 
-                Write-Host "  Property: $($_.Name)" -ForegroundColor Gray 
+            if ($defaultBranding) {
+                $defaultBranding | Get-Member -MemberType Properties | ForEach-Object { 
+                    Write-Host "  Property: $($_.Name)" -ForegroundColor Gray 
+                }
+                Write-Host "=== DEBUG: Raw Property Values ===" -ForegroundColor Magenta
+                Write-Host "  BackgroundImageRelativeUrl: '$($defaultBranding.BackgroundImageRelativeUrl)'" -ForegroundColor Gray
+                Write-Host "  SignInPageText: '$($defaultBranding.SignInPageText)'" -ForegroundColor Gray
+                Write-Host "  BannerLogoRelativeUrl: '$($defaultBranding.BannerLogoRelativeUrl)'" -ForegroundColor Gray
+                Write-Host "  SquareLogoRelativeUrl: '$($defaultBranding.SquareLogoRelativeUrl)'" -ForegroundColor Gray
+            } else {
+                Write-Host "  defaultBranding is null!" -ForegroundColor Red
             }
             Write-Host "=== DEBUG: Assigned Values ===" -ForegroundColor Magenta
             Write-Host "  BackgroundImageUrl: '$($brandingData.BackgroundImageUrl)'" -ForegroundColor Gray
