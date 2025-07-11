@@ -154,72 +154,131 @@ function Get-OrganizationalBranding {
     Write-Host "Checking organizational branding..." -ForegroundColor Cyan
     
     try {
-        Write-Host "Using Graph REST API to get branding..." -ForegroundColor Gray
+        # First get the organization ID
+        Write-Host "Getting organization ID..." -ForegroundColor Gray
+        $org = Invoke-MgGraphRequest -Uri "/organization" -Method GET
+        $orgId = $org.value[0].id
+        Write-Host "Organization ID: $orgId" -ForegroundColor Gray
         
-        # Use REST API call directly - this should not prompt for any parameters
-        $headers = @{
-            'Content-Type' = 'application/json'
+        # Now check branding localizations
+        Write-Host "Checking branding localizations..." -ForegroundColor Gray
+        $brandingUri = "/organization/$orgId/branding/localizations"
+        $localizationsResponse = Invoke-MgGraphRequest -Uri $brandingUri -Method GET
+        
+        $brandingData = [PSCustomObject]@{
+            BackgroundColor = $null
+            BackgroundImageUrl = $null
+            BannerLogoUrl = $null
+            SignInPageText = $null
+            SquareLogoUrl = $null
+            UsernameHintText = $null
+            Id = $null
+            LocaleId = $null
+            HasBranding = $false
+            RawData = $null
+            LocalizationsCount = 0
+            Localizations = @()
         }
         
-        $brandingResponse = $null
-        
-        # Try the REST API call
-        $brandingResponse = Invoke-MgGraphRequest -Uri "/organization/branding" -Method GET -Headers $headers
-        
-        if ($brandingResponse -and $brandingResponse.PSObject.Properties.Count -gt 0) {
-            Write-Host "SUCCESS: Branding data retrieved!" -ForegroundColor Green
+        if ($localizationsResponse -and $localizationsResponse.value -and $localizationsResponse.value.Count -gt 0) {
+            Write-Host "SUCCESS: Found $($localizationsResponse.value.Count) branding localizations!" -ForegroundColor Green
+            
+            $brandingData.LocalizationsCount = $localizationsResponse.value.Count
+            $brandingData.Localizations = $localizationsResponse.value
+            
+            # Use the first localization (usually default)
+            $defaultBranding = $localizationsResponse.value[0]
             
             # Check if we have actual branding data
             $hasBrandingData = $false
-            if ($brandingResponse.backgroundColor -or 
-                $brandingResponse.backgroundImageRelativeUrl -or 
-                $brandingResponse.bannerLogoRelativeUrl -or 
-                $brandingResponse.signInPageText -or 
-                $brandingResponse.squareLogoRelativeUrl -or 
-                $brandingResponse.usernameHintText) {
+            if ($defaultBranding.backgroundColor -or 
+                $defaultBranding.backgroundImageRelativeUrl -or 
+                $defaultBranding.bannerLogoRelativeUrl -or 
+                $defaultBranding.signInPageText -or 
+                $defaultBranding.squareLogoRelativeUrl -or 
+                $defaultBranding.usernameHintText) {
                 $hasBrandingData = $true
             }
             
-            $brandingData = [PSCustomObject]@{
-                BackgroundColor = $brandingResponse.backgroundColor
-                BackgroundImageUrl = $brandingResponse.backgroundImageRelativeUrl
-                BannerLogoUrl = $brandingResponse.bannerLogoRelativeUrl
-                SignInPageText = $brandingResponse.signInPageText
-                SquareLogoUrl = $brandingResponse.squareLogoRelativeUrl
-                UsernameHintText = $brandingResponse.usernameHintText
-                Id = $brandingResponse.id
-                LocaleId = $brandingResponse.locale
-                HasBranding = $hasBrandingData
-                RawData = $brandingResponse
+            $brandingData.BackgroundColor = $defaultBranding.backgroundColor
+            $brandingData.BackgroundImageUrl = $defaultBranding.backgroundImageRelativeUrl
+            $brandingData.BannerLogoUrl = $defaultBranding.bannerLogoRelativeUrl
+            $brandingData.SignInPageText = $defaultBranding.signInPageText
+            $brandingData.SquareLogoUrl = $defaultBranding.squareLogoRelativeUrl
+            $brandingData.UsernameHintText = $defaultBranding.usernameHintText
+            $brandingData.Id = $defaultBranding.id
+            $brandingData.LocaleId = $defaultBranding.locale
+            $brandingData.HasBranding = $hasBrandingData
+            $brandingData.RawData = $defaultBranding
+            
+            # Show detailed results
+            Write-Host "=== BRANDING LOCALIZATIONS FOUND ===" -ForegroundColor Cyan
+            Write-Host "Total Localizations: $($localizationsResponse.value.Count)" -ForegroundColor White
+            
+            foreach ($localization in $localizationsResponse.value) {
+                Write-Host "--- Localization: $($localization.locale) ---" -ForegroundColor Yellow
+                Write-Host "  Background Color: '$($localization.backgroundColor)'" -ForegroundColor White
+                Write-Host "  Background Image: '$($localization.backgroundImageRelativeUrl)'" -ForegroundColor White
+                Write-Host "  Sign-in Page Text: '$($localization.signInPageText)'" -ForegroundColor White
+                Write-Host "  Banner Logo: '$($localization.bannerLogoRelativeUrl)'" -ForegroundColor White
+                Write-Host "  Square Logo: '$($localization.squareLogoRelativeUrl)'" -ForegroundColor White
+                Write-Host "  Username Hint: '$($localization.usernameHintText)'" -ForegroundColor White
             }
             
-            # Show what we found
-            Write-Host "=== BRANDING RESULTS ===" -ForegroundColor Cyan
-            Write-Host "Background Color: '$($brandingResponse.backgroundColor)'" -ForegroundColor White
-            Write-Host "Background Image URL: '$($brandingResponse.backgroundImageRelativeUrl)'" -ForegroundColor White
-            Write-Host "Sign-in Page Text: '$($brandingResponse.signInPageText)'" -ForegroundColor White
-            Write-Host "Banner Logo URL: '$($brandingResponse.bannerLogoRelativeUrl)'" -ForegroundColor White
-            Write-Host "Square Logo URL: '$($brandingResponse.squareLogoRelativeUrl)'" -ForegroundColor White
-            Write-Host "Username Hint: '$($brandingResponse.usernameHintText)'" -ForegroundColor White
-            Write-Host "Has Branding Data: $hasBrandingData" -ForegroundColor White
-            Write-Host "======================" -ForegroundColor Cyan
+            Write-Host "Using Default Localization: $($defaultBranding.locale)" -ForegroundColor Green
+            Write-Host "Has Branding Data: $hasBrandingData" -ForegroundColor Green
+            Write-Host "=================================" -ForegroundColor Cyan
             
             return $brandingData
         }
         else {
-            Write-Host "No branding configuration found" -ForegroundColor Yellow
-            return [PSCustomObject]@{
-                BackgroundColor = $null
-                BackgroundImageUrl = $null
-                BannerLogoUrl = $null
-                SignInPageText = $null
-                SquareLogoUrl = $null
-                UsernameHintText = $null
-                Id = $null
-                LocaleId = $null
-                HasBranding = $false
-                RawData = $null
+            Write-Host "No branding localizations found" -ForegroundColor Yellow
+            
+            # Also try the default branding endpoint as fallback
+            try {
+                Write-Host "Trying default branding endpoint..." -ForegroundColor Gray
+                $defaultBrandingUri = "/organization/$orgId/branding"
+                $defaultBrandingResponse = Invoke-MgGraphRequest -Uri $defaultBrandingUri -Method GET
+                
+                if ($defaultBrandingResponse) {
+                    Write-Host "Found default branding data!" -ForegroundColor Green
+                    
+                    $hasBrandingData = $false
+                    if ($defaultBrandingResponse.backgroundColor -or 
+                        $defaultBrandingResponse.backgroundImageRelativeUrl -or 
+                        $defaultBrandingResponse.bannerLogoRelativeUrl -or 
+                        $defaultBrandingResponse.signInPageText -or 
+                        $defaultBrandingResponse.squareLogoRelativeUrl -or 
+                        $defaultBrandingResponse.usernameHintText) {
+                        $hasBrandingData = $true
+                    }
+                    
+                    $brandingData.BackgroundColor = $defaultBrandingResponse.backgroundColor
+                    $brandingData.BackgroundImageUrl = $defaultBrandingResponse.backgroundImageRelativeUrl
+                    $brandingData.BannerLogoUrl = $defaultBrandingResponse.bannerLogoRelativeUrl
+                    $brandingData.SignInPageText = $defaultBrandingResponse.signInPageText
+                    $brandingData.SquareLogoUrl = $defaultBrandingResponse.squareLogoRelativeUrl
+                    $brandingData.UsernameHintText = $defaultBrandingResponse.usernameHintText
+                    $brandingData.Id = $defaultBrandingResponse.id
+                    $brandingData.HasBranding = $hasBrandingData
+                    $brandingData.RawData = $defaultBrandingResponse
+                    
+                    Write-Host "=== DEFAULT BRANDING FOUND ===" -ForegroundColor Cyan
+                    Write-Host "Background Color: '$($defaultBrandingResponse.backgroundColor)'" -ForegroundColor White
+                    Write-Host "Background Image: '$($defaultBrandingResponse.backgroundImageRelativeUrl)'" -ForegroundColor White
+                    Write-Host "Sign-in Page Text: '$($defaultBrandingResponse.signInPageText)'" -ForegroundColor White
+                    Write-Host "Banner Logo: '$($defaultBrandingResponse.bannerLogoRelativeUrl)'" -ForegroundColor White
+                    Write-Host "Square Logo: '$($defaultBrandingResponse.squareLogoRelativeUrl)'" -ForegroundColor White
+                    Write-Host "Username Hint: '$($defaultBrandingResponse.usernameHintText)'" -ForegroundColor White
+                    Write-Host "Has Branding Data: $hasBrandingData" -ForegroundColor White
+                    Write-Host "=============================" -ForegroundColor Cyan
+                }
             }
+            catch {
+                Write-Host "Default branding endpoint also failed: $($_.Exception.Message)" -ForegroundColor Yellow
+            }
+            
+            return $brandingData
         }
     }
     catch {
@@ -238,6 +297,8 @@ function Get-OrganizationalBranding {
             HasBranding = $false
             Error = $_.Exception.Message
             RawData = $null
+            LocalizationsCount = 0
+            Localizations = @()
         }
     }
 }
