@@ -188,59 +188,7 @@ function Get-OrganizationalBranding {
             # Use the first localization (usually default with ID "0")
             $defaultBranding = $brandingLocalizations[0]
             
-            # Check if we have actual branding data
-            $hasBrandingData = $false
-            if ($defaultBranding.BackgroundColor -or 
-                $defaultBranding.BackgroundImageRelativeUrl -or 
-                $defaultBranding.BannerLogoRelativeUrl -or 
-                $defaultBranding.SignInPageText -or 
-                $defaultBranding.SquareLogoRelativeUrl -or 
-                $defaultBranding.UsernameHintText) {
-                $hasBrandingData = $true
-            }
-            
-            $brandingData.BackgroundColor = $defaultBranding.BackgroundColor
-            $brandingData.BackgroundImageUrl = $defaultBranding.BackgroundImageRelativeUrl
-            $brandingData.BannerLogoUrl = $defaultBranding.BannerLogoRelativeUrl
-            $brandingData.SignInPageText = $defaultBranding.SignInPageText
-            $brandingData.SquareLogoUrl = $defaultBranding.SquareLogoRelativeUrl
-            $brandingData.UsernameHintText = $defaultBranding.UsernameHintText
-            $brandingData.Id = $defaultBranding.Id
-            $brandingData.LocaleId = $defaultBranding.Id  # The ID field contains the locale
-            $brandingData.HasBranding = $hasBrandingData
-            $brandingData.RawData = $defaultBranding
-            
-            # Show detailed results
-            Write-Host "=== BRANDING LOCALIZATIONS FOUND ===" -ForegroundColor Cyan
-            Write-Host "Total Localizations: $($brandingLocalizations.Count)" -ForegroundColor White
-            
-            foreach ($localization in $brandingLocalizations) {
-                Write-Host "--- Localization ID: $($localization.Id) ---" -ForegroundColor Yellow
-                Write-Host "  Background Color: '$($localization.BackgroundColor)'" -ForegroundColor White
-                Write-Host "  Background Image: '$($localization.BackgroundImageRelativeUrl)'" -ForegroundColor White
-                Write-Host "  Sign-in Page Text: '$($localization.SignInPageText)'" -ForegroundColor White
-                Write-Host "  Banner Logo: '$($localization.BannerLogoRelativeUrl)'" -ForegroundColor White
-                Write-Host "  Square Logo: '$($localization.SquareLogoRelativeUrl)'" -ForegroundColor White
-                Write-Host "  Username Hint: '$($localization.UsernameHintText)'" -ForegroundColor White
-            }
-            
-            Write-Host "Using Default Localization: $($defaultBranding.Id)" -ForegroundColor Green
-            Write-Host "Has Branding Data: $hasBrandingData" -ForegroundColor Green
-            Write-Host "=================================" -ForegroundColor Cyan
-        }
-        else {
-            Write-Host "No branding localizations found" -ForegroundColor Yellow
-        }
-        
-        # Process the branding data if we found any
-        if ($localizationsData -and $localizationsData.Count -gt 0) {
-            $brandingData.LocalizationsCount = $localizationsData.Count
-            $brandingData.Localizations = $localizationsData
-            
-            # Use the first localization (usually default)
-            $defaultBranding = $localizationsData[0]
-            
-            # Check if we have actual branding data
+            # Check if we have actual branding data - use correct property names (camelCase)
             $hasBrandingData = $false
             if ($defaultBranding.backgroundColor -or 
                 $defaultBranding.backgroundImageRelativeUrl -or 
@@ -257,17 +205,17 @@ function Get-OrganizationalBranding {
             $brandingData.SignInPageText = $defaultBranding.signInPageText
             $brandingData.SquareLogoUrl = $defaultBranding.squareLogoRelativeUrl
             $brandingData.UsernameHintText = $defaultBranding.usernameHintText
-            $brandingData.Id = $defaultBranding.id
-            $brandingData.LocaleId = $defaultBranding.locale
+            $brandingData.Id = $defaultBranding.Id
+            $brandingData.LocaleId = $defaultBranding.Id  # The ID field contains the locale
             $brandingData.HasBranding = $hasBrandingData
             $brandingData.RawData = $defaultBranding
             
             # Show detailed results
-            Write-Host "=== BRANDING DATA FOUND ===" -ForegroundColor Cyan
-            Write-Host "Total Localizations: $($localizationsData.Count)" -ForegroundColor White
+            Write-Host "=== BRANDING LOCALIZATIONS FOUND ===" -ForegroundColor Cyan
+            Write-Host "Total Localizations: $($brandingLocalizations.Count)" -ForegroundColor White
             
-            foreach ($localization in $localizationsData) {
-                Write-Host "--- Localization: $($localization.locale) ---" -ForegroundColor Yellow
+            foreach ($localization in $brandingLocalizations) {
+                Write-Host "--- Localization ID: $($localization.Id) ---" -ForegroundColor Yellow
                 Write-Host "  Background Color: '$($localization.backgroundColor)'" -ForegroundColor White
                 Write-Host "  Background Image: '$($localization.backgroundImageRelativeUrl)'" -ForegroundColor White
                 Write-Host "  Sign-in Page Text: '$($localization.signInPageText)'" -ForegroundColor White
@@ -276,12 +224,12 @@ function Get-OrganizationalBranding {
                 Write-Host "  Username Hint: '$($localization.usernameHintText)'" -ForegroundColor White
             }
             
-            Write-Host "Using Default Localization: $($defaultBranding.locale)" -ForegroundColor Green
+            Write-Host "Using Default Localization: $($defaultBranding.Id)" -ForegroundColor Green
             Write-Host "Has Branding Data: $hasBrandingData" -ForegroundColor Green
-            Write-Host "=========================" -ForegroundColor Cyan
+            Write-Host "=================================" -ForegroundColor Cyan
         }
         else {
-            Write-Host "No branding data found through any method" -ForegroundColor Yellow
+            Write-Host "No branding localizations found" -ForegroundColor Yellow
         }
         
         return $brandingData
