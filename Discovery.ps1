@@ -188,23 +188,23 @@ function Get-OrganizationalBranding {
             # Use the first localization (usually default with ID "0")
             $defaultBranding = $brandingLocalizations[0]
             
-            # Check if we have actual branding data - use correct property names (camelCase)
+            # Check if we have actual branding data - use correct property names (PascalCase)
             $hasBrandingData = $false
-            if ($defaultBranding.backgroundColor -or 
-                $defaultBranding.backgroundImageRelativeUrl -or 
-                $defaultBranding.bannerLogoRelativeUrl -or 
-                $defaultBranding.signInPageText -or 
-                $defaultBranding.squareLogoRelativeUrl -or 
-                $defaultBranding.usernameHintText) {
+            if ($defaultBranding.BackgroundColor -or 
+                $defaultBranding.BackgroundImageRelativeUrl -or 
+                $defaultBranding.BannerLogoRelativeUrl -or 
+                $defaultBranding.SignInPageText -or 
+                $defaultBranding.SquareLogoRelativeUrl -or 
+                $defaultBranding.UsernameHintText) {
                 $hasBrandingData = $true
             }
             
-            $brandingData.BackgroundColor = $defaultBranding.backgroundColor
-            $brandingData.BackgroundImageUrl = $defaultBranding.backgroundImageRelativeUrl
-            $brandingData.BannerLogoUrl = $defaultBranding.bannerLogoRelativeUrl
-            $brandingData.SignInPageText = $defaultBranding.signInPageText
-            $brandingData.SquareLogoUrl = $defaultBranding.squareLogoRelativeUrl
-            $brandingData.UsernameHintText = $defaultBranding.usernameHintText
+            $brandingData.BackgroundColor = $defaultBranding.BackgroundColor
+            $brandingData.BackgroundImageUrl = $defaultBranding.BackgroundImageRelativeUrl
+            $brandingData.BannerLogoUrl = $defaultBranding.BannerLogoRelativeUrl
+            $brandingData.SignInPageText = $defaultBranding.SignInPageText
+            $brandingData.SquareLogoUrl = $defaultBranding.SquareLogoRelativeUrl
+            $brandingData.UsernameHintText = $defaultBranding.UsernameHintText
             $brandingData.Id = $defaultBranding.Id
             $brandingData.LocaleId = $defaultBranding.Id  # The ID field contains the locale
             $brandingData.HasBranding = $hasBrandingData
@@ -216,12 +216,12 @@ function Get-OrganizationalBranding {
             
             foreach ($localization in $brandingLocalizations) {
                 Write-Host "--- Localization ID: $($localization.Id) ---" -ForegroundColor Yellow
-                Write-Host "  Background Color: '$($localization.backgroundColor)'" -ForegroundColor White
-                Write-Host "  Background Image: '$($localization.backgroundImageRelativeUrl)'" -ForegroundColor White
-                Write-Host "  Sign-in Page Text: '$($localization.signInPageText)'" -ForegroundColor White
-                Write-Host "  Banner Logo: '$($localization.bannerLogoRelativeUrl)'" -ForegroundColor White
-                Write-Host "  Square Logo: '$($localization.squareLogoRelativeUrl)'" -ForegroundColor White
-                Write-Host "  Username Hint: '$($localization.usernameHintText)'" -ForegroundColor White
+                Write-Host "  Background Color: '$($localization.BackgroundColor)'" -ForegroundColor White
+                Write-Host "  Background Image: '$($localization.BackgroundImageRelativeUrl)'" -ForegroundColor White
+                Write-Host "  Sign-in Page Text: '$($localization.SignInPageText)'" -ForegroundColor White
+                Write-Host "  Banner Logo: '$($localization.BannerLogoRelativeUrl)'" -ForegroundColor White
+                Write-Host "  Square Logo: '$($localization.SquareLogoRelativeUrl)'" -ForegroundColor White
+                Write-Host "  Username Hint: '$($localization.UsernameHintText)'" -ForegroundColor White
             }
             
             Write-Host "Using Default Localization: $($defaultBranding.Id)" -ForegroundColor Green
