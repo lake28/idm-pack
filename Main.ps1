@@ -141,8 +141,13 @@ function Start-Discovery {
 function Start-Configuration {
     try {
         Write-Host "Starting Configuration..." -ForegroundColor Green
-        # Configuration script will be implemented later
+        
+        # Load and execute configuration script
+        . .\Configure.ps1
+        $configResults = Start-TenantConfiguration
+        
         Write-Host "Configuration completed successfully." -ForegroundColor Green
+        return $configResults
     }
     catch {
         Write-Error "Configuration failed: $_"
