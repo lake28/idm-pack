@@ -1,0 +1,112 @@
+{
+  "authenticationMethodsPolicy": {
+    "displayName": "Authentication Methods Policy",
+    "description": "Standard authentication methods configuration with Microsoft Authenticator and Temporary Access Pass enabled",
+    "policyVersion": "1.0",
+    "reconfirmationInDays": 0,
+    "registrationEnforcement": {
+      "authenticationMethodsRegistrationCampaign": {
+        "snoozeDurationInDays": 0,
+        "enforceRegistrationAfterAllowedSnoozes": true,
+        "excludeTargets": [],
+        "includeTargets": [
+          {
+            "targetType": "group",
+            "targetedAuthenticationMethod": "microsoftAuthenticator",
+            "id": "all_users"
+          }
+        ],
+        "state": "enabled"
+      }
+    }
+  },
+  "authenticationMethods": {
+    "microsoftAuthenticator": {
+      "state": "enabled",
+      "isSoftwareOathEnabled": true,
+      "includeTargets": [
+        {
+          "targetType": "group",
+          "id": "all_users",
+          "isRegistrationRequired": false,
+          "authenticationMode": "any",
+          "displayAppInformationRequiredState": "enabled",
+          "numberMatchingRequiredState": "enabled"
+        }
+      ],
+      "featureSettings": {
+        "displayAppInformationRequiredState": "enabled",
+        "displayLocationInformationRequiredState": "enabled",
+        "numberMatchingRequiredState": "enabled"
+      }
+    },
+    "temporaryAccessPass": {
+      "state": "enabled",
+      "defaultLifetimeInMinutes": 60,
+      "defaultLength": 8,
+      "minimumLifetimeInMinutes": 10,
+      "maximumLifetimeInMinutes": 480,
+      "isUsableOnce": false,
+      "includeTargets": [
+        {
+          "targetType": "group",
+          "id": "all_users",
+          "isRegistrationRequired": false
+        }
+      ]
+    },
+    "fido2": {
+      "state": "enabled",
+      "isAttestationEnforced": false,
+      "isSelfServiceRegistrationAllowed": true,
+      "keyRestrictions": {
+        "isEnforced": false,
+        "enforcementType": "allow",
+        "aaGuids": []
+      },
+      "includeTargets": [
+        {
+          "targetType": "group",
+          "id": "all_users",
+          "isRegistrationRequired": false
+        }
+      ]
+    },
+    "email": {
+      "state": "enabled",
+      "allowExternalIdToUseEmailOtp": "enabled",
+      "includeTargets": [
+        {
+          "targetType": "group",
+          "id": "all_users",
+          "isRegistrationRequired": false
+        }
+      ]
+    },
+    "sms": {
+      "state": "enabled",
+      "includeTargets": [
+        {
+          "targetType": "group",
+          "id": "all_users",
+          "isRegistrationRequired": false
+        }
+      ]
+    },
+    "voice": {
+      "state": "disabled",
+      "isOfficePhoneAllowed": false,
+      "includeTargets": []
+    }
+  },
+  "passwordProtection": {
+    "enabledForCloudOnlyUsers": true,
+    "enabledForOnPremisesUsers": true,
+    "lockoutThreshold": 10,
+    "lockoutDurationInSeconds": 60,
+    "mode": "enforced",
+    "customBannedPasswords": [],
+    "enableBannedPasswordCheckOnPremises": true
+  },
+  "description": "Authentication methods configuration with Microsoft Authenticator, Temporary Access Pass, and FIDO2 enabled, plus password protection settings."
+}

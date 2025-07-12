@@ -1,0 +1,48 @@
+{
+  "displayName": "[Grant] MFA for all users",
+  "state": "enabled",
+  "conditions": {
+    "users": {
+      "includeUsers": [
+        "All"
+      ],
+      "excludeUsers": [],
+      "includeRoles": [],
+      "excludeRoles": []
+    },
+    "applications": {
+      "includeApplications": [
+        "All"
+      ],
+      "excludeApplications": [
+        "0cb7b9ec-5336-483b-bc31-b15b5788de71",
+        "d4ebce55-015a-49b5-a083-c84d1797ae8c"
+      ]
+    },
+    "locations": {
+      "includeLocations": [
+        "All"
+      ],
+      "excludeLocations": []
+    },
+    "platforms": {
+      "includePlatforms": [
+        "all"
+      ],
+      "excludePlatforms": []
+    },
+    "clientAppTypes": [
+      "all"
+    ]
+  },
+  "grantControls": {
+    "operator": "OR",
+    "builtInControls": [
+      "mfa"
+    ],
+    "customAuthenticationFactors": [],
+    "termsOfUse": []
+  },
+  "sessionControls": null,
+  "description": "Require MFA for all users accessing cloud applications to ensure baseline security across the organization."
+}

@@ -1,0 +1,49 @@
+{
+  "selfServicePasswordResetEnabled": true,
+  "selfServicePasswordResetEnabledGroup": null,
+  "numberOfMethodsRequired": 2,
+  "methodsAvailable": [
+    "mobilePhone",
+    "email",
+    "mobileApp",
+    "officePhone"
+  ],
+  "registrationRequired": true,
+  "registrationReconfirmIntervalInDays": 180,
+  "skipRegistrationAfterSignIn": false,
+  "customizeHelpdeskLink": false,
+  "customHelpdeskEmailOrUrl": "",
+  "notifyUsersOnPasswordReset": true,
+  "notifyAllAdminsOnPasswordReset": true,
+  "notifyOnPasswordResetMethod": "mobileApp",
+  "enablementType": "all",
+  "description": "Self-Service Password Reset configuration with 2 methods required, mobile app notification and SMS enabled, registration required at sign-in, and admin notifications enabled.",
+  "configuration": {
+    "mobileApp": {
+      "enabled": true,
+      "notificationEnabled": true,
+      "codeEnabled": true
+    },
+    "mobilePhone": {
+      "enabled": true,
+      "smsEnabled": true,
+      "callEnabled": false
+    },
+    "email": {
+      "enabled": true
+    },
+    "officePhone": {
+      "enabled": false
+    },
+    "securityQuestions": {
+      "enabled": false,
+      "numberOfQuestionsToRegister": 3,
+      "numberOfQuestionsToReset": 3
+    }
+  },
+  "policy": {
+    "passwordResetDaysValid": 1,
+    "passwordResetTimeoutInMinutes": 15,
+    "maxPasswordResetAttemptsPerDay": 5
+  }
+}

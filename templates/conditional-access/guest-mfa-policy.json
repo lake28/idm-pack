@@ -1,0 +1,45 @@
+{
+  "displayName": "[Grant] MFA for all guests",
+  "state": "enabled",
+  "conditions": {
+    "users": {
+      "includeUsers": [
+        "GuestsOrExternalUsers"
+      ],
+      "excludeUsers": [],
+      "includeRoles": [],
+      "excludeRoles": []
+    },
+    "applications": {
+      "includeApplications": [
+        "All"
+      ],
+      "excludeApplications": []
+    },
+    "locations": {
+      "includeLocations": [
+        "All"
+      ],
+      "excludeLocations": []
+    },
+    "platforms": {
+      "includePlatforms": [
+        "all"
+      ],
+      "excludePlatforms": []
+    },
+    "clientAppTypes": [
+      "all"
+    ]
+  },
+  "grantControls": {
+    "operator": "OR",
+    "builtInControls": [
+      "mfa"
+    ],
+    "customAuthenticationFactors": [],
+    "termsOfUse": []
+  },
+  "sessionControls": null,
+  "description": "Require MFA for all guest and external users to ensure secure access for non-organizational accounts."
+}

@@ -1,0 +1,46 @@
+{
+  "organizationalBranding": {
+    "localizationId": "0",
+    "backgroundColor": "#ffffff",
+    "backgroundImagePath": "assets/background-image.jpg",
+    "backgroundImageRelativeUrl": null,
+    "bannerLogoPath": "assets/banner-logo.png",
+    "bannerLogoRelativeUrl": null,
+    "squareLogoPath": "assets/square-logo.png",
+    "squareLogoRelativeUrl": null,
+    "squareLogoDarkPath": "assets/square-logo-dark.png",
+    "squareLogoDarkRelativeUrl": null,
+    "faviconPath": "assets/favicon.ico",
+    "faviconRelativeUrl": null,
+    "headerBackgroundColor": "#0078d4",
+    "headerLogoPath": "assets/header-logo.png",
+    "headerLogoRelativeUrl": null,
+    "signInPageText": "Welcome to your organization. Please sign in with your corporate credentials.",
+    "usernameHintText": "user@company.com",
+    "customCssPath": "assets/custom.css",
+    "customCssRelativeUrl": null,
+    "customPrivacyAndCookiesText": "Privacy and Cookies",
+    "customPrivacyAndCookiesUrl": "https://company.com/privacy",
+    "customTermsOfUseText": "Terms of Use",
+    "customTermsOfUseUrl": "https://company.com/terms",
+    "customCannotAccessYourAccountText": "Can't access your account?",
+    "customCannotAccessYourAccountUrl": "https://company.com/support",
+    "customForgotMyPasswordText": "Forgot my password",
+    "customResetItNowText": "Reset it now",
+    "customAccountResetCredentialsUrl": "https://company.com/reset"
+  },
+  "assetsFolder": "assets/",
+  "supportedFormats": {
+    "backgroundImage": [".jpg", ".jpeg", ".png"],
+    "logos": [".png", ".jpg", ".jpeg", ".svg"],
+    "favicon": [".ico", ".png"],
+    "css": [".css"]
+  },
+  "maxFileSizes": {
+    "backgroundImage": "1920x1080",
+    "bannerLogo": "280x60",
+    "squareLogo": "240x240",
+    "favicon": "32x32"
+  },
+  "description": "Organizational branding configuration template with paths to image assets and customizable text elements for sign-in page branding."
+}
