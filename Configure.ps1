@@ -112,7 +112,7 @@ function New-EmergencyAccessAccount {
                 ForceChangePasswordNextSignIn = $false
                 Password = $emergencyPassword
             }
-            UsageLocation = "US"  # Required for license assignment
+            UsageLocation = "GB"  # Required for license assignment
         }
         
         $newUser = New-MgUser @userParams
